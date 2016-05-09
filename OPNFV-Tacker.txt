@@ -30,8 +30,7 @@ export http_proxy=
 
 curl -u admin:admin -H 'Content-type: application/json' -X PUT -d '{"netvirt-providers-config":{"table-offset":"1"}}' http://192.168.0.3:8181/restconf/config/netvirt-providers-config:netvirt-providers-config
 
-curl -u admin:admin -H 'Content-type: application/json' -X PUT -d '{"sfc-of-renderer-config":{"sfc-of-renderer-config":"150""sfc-of-app-egress-table-offset":"11"}}' http://192.168.0.3:8181/restconf/config/sfc-of-renderer:sfc-of-renderer-config
-
+curl -i -u admin:admin -H 'Content-type: application/json' -X PUT -d '{"sfc-of-renderer-config":{"sfc-of-table-offset":"150","sfc-of-app-egress-table-offset":"11"}}' http://192.168.0.2:8181/restconf/config/sfc-of-renderer:sfc-of-renderer-config
 
 neutron net-create net_mgmt --provider:network_type=vxlan --provider:segmentation_id 1005
 
