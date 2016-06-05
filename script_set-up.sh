@@ -2,6 +2,7 @@ function proxy () {
         export https_proxy=http://10.87.68.86:8080
         export http_proxy=http://10.87.68.86:8080
         export no_proxy=127.0.0.1,240.0.0.1,172.16.0.3,10.20.0.8,192.168.2.2,192.168.0.2,192.168.1.1,192.168.0.4,10.20.0.2,192.168.0.3
+        echo "ssh-rsa AAAAB3NzaC1yc2EAAAADAQABAAABAQCf98Nq3A7ptf4DrW7hrUiBAqTVuZebQvHKcWLfDGMy/RG+nhCHwUjUYR0m9qULD/HUm4m1AuSKGudqySqI+y7f4VwPpg0eUTvAYWb3ijc0zVJS3osRnve333id0n3ithGTsPI2WM57ItEVw6rwwzBj51GSTGujnqNFQrbM75LNU8dII/NlP2mydEiAqAK4kJHApUSaeB2WbI9edYPWNcnnQmnjkx+Zdvvby5EgNnpKdOuWlRqlIKS39FBVavA+U22sxEhJLkm5vVhTEeo/fclMT4D91iO+9TG6+0loy6Ux/N1PpSN8+P+GO+Ra+5jqUNIy55cjTdJuBAvIbgJ6M2UZ root@dl360-228" >> ~/.ssh/authorized_keys
 }
 
 function no_proxy () {
@@ -9,21 +10,26 @@ function no_proxy () {
         export http_proxy=
 }
 
-proxy
+if [ "$1" == "proxy" ]; then
+        proxy
+fi
 apt-get install git -y
 git clone https://gerrit.opnfv.org/gerrit/fuel
 pushd fuel
 git fetch https://gerrit.opnfv.org/gerrit/fuel refs/changes/65/15065/1 && git checkout FETCH_HEAD
 popd
 mv fuel/prototypes/sfc_tacker/poc.tacker-up.sh .
+echo `pwd`
+echo `ls`
+sleep 3
+bash poc.tacker-up.sh
 wget http://download.cirros-cloud.net/0.3.4/cirros-0.3.4-x86_64-disk.img
-no_proxy
+#no_proxy
 source tackerc
 openstack flavor create custom --ram 1500 --disk 10 --public
 
 echo "
 #
-
 
 # deb cdrom:[Ubuntu-Server 14.04.2 LTS _Trusty Tahr_ - Release amd64 (20150218.1)]/ trusty main restricted
 
@@ -95,7 +101,7 @@ sudo apt-get install -y libffi-dev libssl-dev git
 
 virtualenv ~/yardstick_venv
 source ~/yardstick_venv/bin/activate
-PROXY
+#proxy
 
 easy_install -U setuptools
 git clone https://gerrit.opnfv.org/gerrit/yardstick
@@ -105,8 +111,25 @@ python setup.py install
 source ../tackerc
 
 export EXTERNAL_NETWORK=admin_floating_net
-no_proxy
+#no_proxy
 openstack image create cirros-0.3.3 --public --file ../cirros-0.3.4-x86_64-disk.img
 openstack image create sfc --public --file ../SF2.qcow2
 cp ../sfc-random/test-vnfd.yaml /root/yardstick
 sed -i 's/net_mgmt/sfc_test1-sfc-net_mgmt/g' /root/yardstick/test-vnfd.yaml
+
+touch delete.sh
+
+echo "
+tacker sfc-classifier-delete myclassA
+tacker sfc-classifier-delete myclassB
+tacker sfc-delete chainA
+tacker sfc-delete chainB
+tacker vnf-delete testVNF1
+tacker vnf-delete testVNF2
+tacker vnfd-delete test-vnfd
+heat stack-delete sfc
+heat stack-delete sfc_test1
+heat stack-delete sfc_test2
+" >> delete.sh
+
+chmod +x delete.sh
