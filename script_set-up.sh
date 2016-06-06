@@ -133,3 +133,4 @@ heat stack-delete sfc_test2
 " >> delete.sh
 
 chmod +x delete.sh
+export EXTERNAL_NETWORK=admin_floating_net
