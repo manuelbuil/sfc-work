@@ -116,6 +116,14 @@ openstack image create cirros-0.3.3 --public --file ../cirros-0.3.4-x86_64-disk.
 openstack image create sfc --public --file ../SF2.qcow2
 cp ../sfc-random/test-vnfd.yaml /root/yardstick
 sed -i 's/net_mgmt/sfc_test1-sfc-net_mgmt/g' /root/yardstick/test-vnfd.yaml
+cp /root/yardstick/test-vnfd.yaml /root/yardstick/test-vnfd1.yaml
+cp /root/yardstick/test-vnfd.yaml /root/yardstick/test-vnfd2.yaml
+rm /root/yardstick/test-vnfd.yaml
+
+sed -i 's/test-vnfd/test-vnfd1/g' /root/yardstick/test-vnfd1.yaml
+sed -i 's/firewall/firewall1/g' /root/yardstick/test-vnfd1.yaml
+sed -i 's/test-vnfd/test-vnfd2/g' /root/yardstick/test-vnfd2.yaml
+sed -i 's/firewall/firewall2/g' /root/yardstick/test-vnfd2.yaml
 
 touch delete.sh
 
