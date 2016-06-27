@@ -138,9 +138,9 @@ tacker vnf-delete testVNF1
 tacker vnf-delete testVNF2
 tacker vnfd-delete test-vnfd1 
 tacker vnfd-delete test-vnfd2
-heat stack-delete sfc
-heat stack-delete sfc_test1
-heat stack-delete sfc_test2
+openstack stack delete sfc
+openstack stack delete sfc_test1
+openstack stack delete sfc_test2
 " >> delete.sh
 
 chmod +x delete.sh
