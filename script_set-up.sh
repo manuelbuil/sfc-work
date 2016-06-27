@@ -128,10 +128,12 @@ sed -i 's/firewall/firewall2/g' /root/yardstick/test-vnfd2.yaml
 touch delete.sh
 
 echo "
-tacker sfc-classifier-delete sfc1_http
-tacker sfc-classifier-delete sfc1_ssh
-tacker sfc-delete chainA
-tacker sfc-delete chainB
+tacker sfc-classifier-delete red_http
+tacker sfc-classifier-delete blue_ssh
+tacker sfc-classifier-delete red_ssh
+tacker sfc-classifier-delete blue_http
+tacker sfc-delete red
+tacker sfc-delete blue
 tacker vnf-delete testVNF1
 tacker vnf-delete testVNF2
 tacker vnfd-delete test-vnfd1 
