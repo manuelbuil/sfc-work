@@ -105,7 +105,7 @@ source ~/yardstick_venv/bin/activate
 easy_install -U setuptools
 git clone https://gerrit.opnfv.org/gerrit/yardstick
 cd yardstick
-git fetch https://gerrit.opnfv.org/gerrit/yardstick refs/changes/77/14577/20 && git checkout FETCH_HEAD
+git fetch https://gerrit.opnfv.org/gerrit/yardstick refs/changes/77/14577/26 && git checkout FETCH_HEAD
 python setup.py install
 source ../tackerc
 
