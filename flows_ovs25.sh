@@ -6,12 +6,12 @@ nsp_hex="0x5b"
 tun_id=$nsp
 mac_tap_interface="0xfe163e61798a"
 mac_SF_interface="0xfa163e624488"
-
+sff_ip=""
 
 
 ovs-ofctl -O Openflow13 del-flows br-int "table=11,tcp,reg0=0x1,tp_dst=80"
 ovs-ofctl -O Openflow13 del-flows br-int "table=11,tcp,reg0=0x1,tp_dst=22"
-ovs-ofctl -O Openflow13 add-flow br-int "table=11,tcp,reg0=0x1,tp_dst=${block_port},in_port=${client_port} actions=load:${tun_id}->NXM_NX_TUN_ID[],push_nsh,load:0x1->NXM_NX_NSH_MDTYPE[],load:0x3->NXM_NX_NSH_NP[],load:${nsp_hex}->NXM_NX_NSP[0..23],load:0xff->NXM_NX_NSI[],load:0x1->NXM_NX_NSH_C1[],load:${tun_id}->NXM_NX_NSH_C2[],load:0x3->NXM_NX_NSH_C3[],load:0x4->NXM_NX_NSH_C4[],goto_table:152" 
+ovs-ofctl -O Openflow13 add-flow br-int "table=11,tcp,reg0=0x1,tp_dst=${block_port},in_port=${client_port} actions=load:${tun_id}->NXM_NX_TUN_ID[],push_nsh,load:0x1->NXM_NX_NSH_MDTYPE[],load:0x3->NXM_NX_NSH_NP[],load:${nsp_hex}->NXM_NX_NSP[0..23],load:0xff->NXM_NX_NSI[],load:$sff_ip->NXM_NX_NSH_C1[],load:${tun_id}->NXM_NX_NSH_C2[],load:0x3->NXM_NX_NSH_C3[],load:0x4->NXM_NX_NSH_C4[],goto_table:152" 
 
 ovs-ofctl -O Openflow13 del-flows br-int "table=152,nsi=255"
 ovs-ofctl -O Openflow13 add-flow br-int "table=152, priority=550,nsi=255,nsp=${nsp} actions=load:${mac_tap_interface}->NXM_NX_ENCAP_ETH_SRC[],load:${mac_SF_interface}->NXM_NX_ENCAP_ETH_DST[],goto_table:158"
