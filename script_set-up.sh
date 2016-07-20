@@ -16,7 +16,7 @@ fi
 apt-get install git -y
 git clone https://gerrit.opnfv.org/gerrit/fuel
 pushd fuel
-git fetch https://gerrit.opnfv.org/gerrit/fuel refs/changes/65/15065/1 && git checkout FETCH_HEAD
+git fetch https://gerrit.opnfv.org/gerrit/fuel refs/changes/65/15065/2 && git checkout FETCH_HEAD
 popd
 mv fuel/prototypes/sfc_tacker/poc.tacker-up.sh .
 echo `pwd`
