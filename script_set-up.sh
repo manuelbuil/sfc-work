@@ -145,3 +145,8 @@ heat stack-delete sfc_test2
 
 chmod +x delete.sh
 export EXTERNAL_NETWORK=admin_floating_net
+
+#Temporarily, while we introduce the vxlan_tool.py in the image
+git clone https://git.opendaylight.org/gerrit/sfc
+cd sfc
+git fetch https://git.opendaylight.org/gerrit/sfc refs/changes/33/41533/1 && git checkout FETCH_HEAD
