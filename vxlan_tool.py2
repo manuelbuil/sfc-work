@@ -512,8 +512,7 @@ def main():
     macaddr = None
 
     try:
-#        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
-        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, 0)
+        s = socket.socket(socket.AF_PACKET, socket.SOCK_RAW, socket.ntohs(0x0003))
         if args.interface is not None:
             s.bind((args.interface, 0))
         if ((args.do == "forward") or (args.do == "send")):
@@ -572,21 +571,22 @@ def main():
     # receive a packet
     pktnum=0
     while True:
-        pdb.set_trace()
         packet = s.recvfrom(65565)
-        pdb.set_trace()
+
         #packet string from tuple
         packet = packet[0]
 
         myethheader = ETHHEADER()
+
         """ Decode ethernet header """
         decode_eth(packet, myethheader)
+        pdb.set_trace()
         if ((myethheader.ethertype0 != 0x08) or (myethheader.ethertype1 != 0x00)):
             if ((myethheader.ethertype0 != 0x89) or (myethheader.ethertype1 != 0x4f)):
                 continue
-#        if (macaddr is not None):
-#            if ((myethheader.dmac4 != int(macaddr[4], 16)) or (myethheader.dmac5 != int(macaddr[5], 16))):
-#                continue
+        if (macaddr is not None):
+            if ((myethheader.dmac4 != int(macaddr[4], 16)) or (myethheader.dmac5 != int(macaddr[5], 16))):
+                continue
 
         """ Check if the received packet was ETH + NSH """
         if ((myethheader.ethertype0 == 0x89) or (myethheader.ethertype1 == 0x4f)):
@@ -643,7 +643,7 @@ def main():
         #    print_ipheader(myipheader)
 
         if (myipheader.ip_proto == 1):
-	    print("\nPING")	
+                
 
 
         if (myipheader.ip_proto != 17):
