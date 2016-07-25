@@ -47,6 +47,9 @@ heat stack-delete sfc_test2
 
 chmod +x delete.sh
 
+source tackerc
+openstack flavor create custom --ram 1500 --disk 10 --public
+
 #Temporarily, while we introduce the vxlan_tool.py in the image
 git clone https://git.opendaylight.org/gerrit/sfc
 cd sfc
