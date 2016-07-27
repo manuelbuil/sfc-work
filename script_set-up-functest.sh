@@ -53,4 +53,4 @@ openstack flavor create custom --ram 1500 --disk 10 --public
 #Temporarily, while we introduce the vxlan_tool.py in the image
 git clone https://git.opendaylight.org/gerrit/sfc
 cd sfc
-git fetch https://git.opendaylight.org/gerrit/sfc refs/changes/33/41533/1 && git checkout FETCH_HEAD
+git fetch https://git.opendaylight.org/gerrit/sfc refs/changes/33/41533/2 && git checkout FETCH_HEAD
