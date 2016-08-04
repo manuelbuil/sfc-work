@@ -1,11 +1,15 @@
-output_port=6
-nsp=0x31
-ip=0xc0a8002b
+nsp=`ovs-ofctl -O Openflow13 dump-flows br-int table=11 | grep "nsp=" | awk '{print $6}' | awk -F ',' '{print $1}' | awk -F '=' '{print $2}'`
+ip=`ovs-ofctl -O Openflow13 dump-flows br-int table=11 | grep NXM_NX_NSH_C1 | head -1 | cut -d':' -f5 | cut -d'-' -f1`
+output_port=`ovs-ofctl -O Openflow13 show br-int | grep vxgpe | cut -d'(' -f1`
+
+output_port2=`echo $output_port`
+
+echo "This is the nsp =$nsp"
+echo "This is the ip=$ip"
+echo "This is the vxlan-gpe port=$output_port2"
+
 nsp_dec=$(($nsp))
 
-echo $nsp
-echo $ip
-echo $nsp_dec
 
 
 ovs-ofctl -O Openflow13 del-flows br-int "table=11,tcp,reg0=0x1,tp_dst=80"
