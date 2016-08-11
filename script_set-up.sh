@@ -13,7 +13,7 @@ function no_proxy () {
 if [ "$1" == "proxy" ]; then
         proxy
 fi
-curl "https://gerrit.opnfv.org/gerrit/gitweb?p=fuel.git;a=blob_plain;f=prototypes/sfc_tacker/poc.tacker-up.sh;hb=ddd4e11bb8bc62b7e8b06d4b44a308293c2c3362" > poc.tacker-up.sh
+curl "https://gerrit.opnfv.org/gerrit/gitweb?p=fuel.git;a=blob_plain;f=prototypes/sfc_tacker/poc.tacker-up.sh;hb=ee3046f24df0bfca7ee15501f6c06ad86dd462c2" > poc.tacker-up.sh
 sleep 3
 bash poc.tacker-up.sh
 #no_proxy
