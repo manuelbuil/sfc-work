@@ -103,7 +103,7 @@ source ../tackerc
 
 export EXTERNAL_NETWORK=admin_floating_net
 #no_proxy
-openstack image create sfc --public --file ../sf_summit2016.qcow2
+openstack image create sfc --public --file ../sf_nsh_colorado.qcow2
 cp ../sfc-random/test-vnfd.yaml /root/yardstick
 sed -i 's/net_mgmt/sfc_test1-sfc-net_mgmt/g' /root/yardstick/test-vnfd.yaml
 cp /root/yardstick/test-vnfd.yaml /root/yardstick/test-vnfd1.yaml
