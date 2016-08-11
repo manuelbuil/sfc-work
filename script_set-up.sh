@@ -13,7 +13,7 @@ function no_proxy () {
 if [ "$1" == "proxy" ]; then
         proxy
 fi
-wget https://gerrit.opnfv.org/gerrit/#/c/15065/5/prototypes/sfc_tacker/poc.tacker-up.sh
+curl "https://gerrit.opnfv.org/gerrit/gitweb?p=fuel.git;a=blob_plain;f=prototypes/sfc_tacker/poc.tacker-up.sh;hb=ddd4e11bb8bc62b7e8b06d4b44a308293c2c3362" > poc.tacker-up.sh
 sleep 3
 bash poc.tacker-up.sh
 #no_proxy
@@ -141,5 +141,3 @@ export EXTERNAL_NETWORK=admin_floating_net
 
 #Temporarily, while we introduce the vxlan_tool.py in the image
 git clone https://git.opendaylight.org/gerrit/sfc
-cd sfc
-git fetch https://git.opendaylight.org/gerrit/sfc refs/changes/33/41533/1 && git checkout FETCH_HEAD
