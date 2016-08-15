@@ -846,7 +846,7 @@ def main():
                 print bcolors.OKBLUE + "SEQ " + str(mytcpheader.tcp_seq) + bcolors.ENDC
                 print bcolors.OKBLUE + "ACK " + str(mytcpheader.tcp_ack) + bcolors.ENDC
 
-                if (mytcpheader.tcp_flags == 0):
+                if (mynshcontextheader.service_platform == 0):
                     if (mytcpheader.tcp_dport == args.block):
                         print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
                         continue
@@ -857,6 +857,8 @@ def main():
                     old_tcpheader = packet[(108+eth_length):(128+eth_length)]
                     packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
                     packet = packet_aux
+                    nsp_symm = mynshcontextheader.service_platform
+                    mynshbaseheader.service_path = nsp_symm
 
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
