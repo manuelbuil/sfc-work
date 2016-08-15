@@ -227,10 +227,22 @@ class TCPHEADER(Structure):
     _fields_ = [
         ('tcp_sport', c_ushort),
         ('tcp_dport', c_ushort),
-        ('tcp_len', c_ushort),
-        ('tcp_sum', c_ushort)]
+        ('tcp_seq', c_uint),
+        ('tcp_ack', c_uint),
+        ('tcp_offset', c_ubyte),
+        ('tcp_flags', c_ubyte),
+        ('tcp_window', c_ushort),
+        ('tcp_checksum', c_ushort),
+        ('tcp_urgent', c_ushort),]
 
-    header_size = 8
+    header_size = 20
+
+    def build(self):
+        tcp_header_pack = pack('!H H I I B B H H H', self.tcp_sport, self.tcp_dport,
+                               self.tcp_seq, self.tcp_ack, self.tcp_offset,
+                               self.tcp_flags, self.tcp_window, self.tcp_checksum,
+                               self.tcp_urgent)
+        return tcp_header_pack
 
 
 def decode_eth(payload, offset, eth_header_values):
@@ -278,15 +290,18 @@ def decode_udp(payload, udp_header_values):
     udp_header_values.udp_sum = _header_values[3]
 
 def decode_tcp(payload, offset, tcp_header_values):
-    tcp_header = payload[(108+offset):(122+offset)]
+    tcp_header = payload[(108+offset):(128+offset)]
 
-    _header_values = unpack('!H H I I B B', tcp_header)
+    _header_values = unpack('!H H I I B B H H H', tcp_header)
     tcp_header_values.tcp_sport = _header_values[0]
     tcp_header_values.tcp_dport = _header_values[1]
     tcp_header_values.tcp_seq = _header_values[2]
     tcp_header_values.tcp_ack = _header_values[3]
     tcp_header_values.tcp_offset = _header_values[4]
     tcp_header_values.tcp_flags = _header_values[5]
+    tcp_header_values.tcp_window = _header_values[6]
+    tcp_header_values.tcp_checksum = _header_values[7]
+    tcp_header_values.tcp_urgent = _header_values[8]
 
 def decode_vxlan(payload, vxlan_header_values):
     """Decode the VXLAN header for a received packets"""
@@ -509,6 +524,7 @@ def main():
                         help='Strip the outer encapsulation and forward the inner packet')
     parser.add_argument('--block', '-b', type=int, default=0,
                         help='Acts as a firewall dropping packets that match this TCP dst port')
+
 
     args = parser.parse_args()
     macaddr = None
@@ -733,11 +749,6 @@ def main():
             if (args.block != 0):
                 mytcpheader = TCPHEADER()
                 decode_tcp(packet, 0, mytcpheader)
-                pdb.set_trace()
-                print bcolors.OKBLUE + "FLAGS " + str(mytcpheader.tcp_flags) + bcolors.ENDC
-                print bcolors.OKBLUE + "OFFSET " + str(mytcpheader.tcp_offset) + bcolors.ENDC
-                print bcolors.OKBLUE + "SEQ " + str(mytcpheader.tcp_seq) + bcolors.ENDC
-                print bcolors.OKBLUE + "ACK " + str(mytcpheader.tcp_ack) + bcolors.ENDC
 
                 if (mytcpheader.tcp_dport == args.block):
                     print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
@@ -835,9 +846,15 @@ def main():
                 print bcolors.OKBLUE + "SEQ " + str(mytcpheader.tcp_seq) + bcolors.ENDC
                 print bcolors.OKBLUE + "ACK " + str(mytcpheader.tcp_ack) + bcolors.ENDC
 
-                if (mytcpheader.tcp_dport == args.block):
-                    print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
-                    continue
+                if (mytcpheader.tcp_flags == 0):
+                    if (mytcpheader.tcp_dport == args.block):
+                        print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
+                        continue
+                else:
+                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
+                    mytcpheader.tcp_flags = 4
+                    hallo = mytcpheader.build()
+                    pdb.set_trace()
 
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
