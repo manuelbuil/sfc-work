@@ -853,8 +853,10 @@ def main():
                 else:
                     print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
                     mytcpheader.tcp_flags = 4
-                    hallo = mytcpheader.build()
-                    pdb.set_trace()
+                    new_tcpheader = mytcpheader.build()
+                    old_tcpheader = packet[(108+eth_length):(128+eth_length)]
+                    packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
+                    packet = packet_aux
 
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
