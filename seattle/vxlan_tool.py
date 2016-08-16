@@ -244,6 +244,26 @@ class TCPHEADER(Structure):
                                self.tcp_urgent)
         return tcp_header_pack
 
+class ICMPHEADER(Structure):
+    """
+    Represents a ICMP header
+    """
+    _fields_ = [
+        ('icmp_type', c_ubyte),
+        ('icmp_code', c_ubyte),
+        ('icmp_checksum', c_ushort),
+        ('icmp_unused', c_ushort),
+        ('icmp_MTU', c_ushort),
+        ('icmp_iphead', c_uint)]
+
+    header_size = 12
+
+    def build(self):
+        icmp_header_pack = pack('!B B H H H I', self.icmp_type, self.icmp_code,
+                                self.icmp_checksum, self.icmp_unused, self.icmp_MTU,
+                                self.icmp_iphead)
+        return icmp_header_pack
+
 
 def decode_eth(payload, offset, eth_header_values):
     eth_header = payload[offset:(offset+14)]
@@ -882,6 +902,16 @@ def main():
                     "We replace the packet with the new tcp header"
                     packet = packet_aux
                     
+
+                    "We create the ICMP packet"
+                    myicmpheader = ICMPHEADER()
+                    myicmpheader.icmp_type = 3
+                    myicmpheader.icmp_code = 0
+                    myicmpheader.icmp_checksum = 
+                    myicmpheader.icmp_unused = 0
+                    myicmpheader.icmp_MTU = 
+                    myicmpheader.icmp_iphead = 
+
                     "We do the same but with IP"
                     myinternalipheader = IP4HEADER()
                     decode_internal_ip(packet, eth_length, myinternalipheader)
