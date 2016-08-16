@@ -303,6 +303,41 @@ def decode_tcp(payload, offset, tcp_header_values):
     tcp_header_values.tcp_checksum = _header_values[7]
     tcp_header_values.tcp_urgent = _header_values[8]
 
+def decode_internal_ip(payload, offset, ip_header_values):
+    ip_header = payload[(87+offset):(107+offset)]
+
+    _header_values = unpack('!B B H H H B B H I I', ip_header)
+    ip_header_values.ip_ihl = _header_values[0] & 0x0F
+    ip_header_values.ip_ver = _header_values[0] >> 4
+    ip_header_values.ip_tos = _header_values[1]
+    ip_header_values.ip_tot_len = _header_values[2]
+    ip_header_values.ip_id = _header_values[3]
+    ip_header_values.ip_frag_offset = _header_values[4]
+    ip_header_values.ip_ttl = _header_values[5]
+    ip_header_values.ip_proto = _header_values[6]
+    ip_header_values.ip_chksum = _header_values[7]
+    ip_header_values.ip_saddr = _header_values[8]
+    ip_header_values.ip_daddr = _header_values[9]
+
+def decode_eth(payload, offset, eth_header_values):
+    eth_header = payload[(offset+66):(offset+86)]
+
+    _header_values = unpack('!B B B B B B B B B B B B B B', eth_header)
+    eth_header_values.dmac0 = _header_values[0]
+    eth_header_values.dmac1 = _header_values[1]
+    eth_header_values.dmac2 = _header_values[2]
+    eth_header_values.dmac3 = _header_values[3]
+    eth_header_values.dmac4 = _header_values[4]
+    eth_header_values.dmac5 = _header_values[5]
+    eth_header_values.smac0 = _header_values[6]
+    eth_header_values.smac1 = _header_values[7]
+    eth_header_values.smac2 = _header_values[8]
+    eth_header_values.smac3 = _header_values[9]
+    eth_header_values.smac4 = _header_values[10]
+    eth_header_values.smac5 = _header_values[11]
+    eth_header_values.ethertype0 = _header_values[12]
+    eth_header_values.ethertype1 = _header_values[13]
+
 def decode_vxlan(payload, vxlan_header_values):
     """Decode the VXLAN header for a received packets"""
     vxlan_header = payload[42:50]
@@ -852,13 +887,39 @@ def main():
                         continue
                 else:
                     print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
+                    "Activate the RESET flag and exchange tcp ports"
+                    pdb.set_trace()
                     mytcpheader.tcp_flags = 4
+                    source_port = mytcpheader.tcp_sport
+                    mytcpheader.tcp_sport = mytcpheader.tcp_dport
+                    mytcpheader.tcp_dport = source_port
+                    "We build the new tcp header with the RESET=1"
                     new_tcpheader = mytcpheader.build()
                     old_tcpheader = packet[(108+eth_length):(128+eth_length)]
+                    "We create an auxiliar variable because strings are immutable"   
                     packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
+                    "We replace the packet with the new tcp header"
                     packet = packet_aux
-                    nsp_symm = mynshcontextheader.service_platform
-                    mynshbaseheader.service_path = nsp_symm
+                    
+                    "We do the same but with IP"
+                    myinternalipheader = IP4HEADER()
+                    decode_ip(packet, eth_length, myinternalipheader)
+                    ip_source = myinternalipheader.ip_saddr
+                    myinternalipheader.ip_saddr = myinternalipheader.ip_daddr
+                    myinternalipheader.ip_daddr = ip_source
+                    new_internalipheader = myinternalipheader.build()
+                    old_internalipheader = packet[(87+eth_length):(107+eth_length)]
+                    packet_aux = packet[:(87+eth_length)] + new_internalipheader + packet[(107+eth_length):]
+                    packet = packet_aux
+
+#                    "We do the same but with MAC"
+#                    inner_internal_ethheader = ETHHEADER()
+#                    decode_internal_eth(packet, eth_length, inner_internal_ethheader)
+#                    
+#
+#                    "We get the nsp of the symmetric chain which is in the metadata"
+#                    nsp_symm = mynshcontextheader.service_platform
+#                    mynshbaseheader.service_path = nsp_symm
 
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
