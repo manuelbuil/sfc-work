@@ -890,31 +890,55 @@ def main():
                     print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
                     "Activate the RESET flag and exchange tcp ports"
                     #pdb.set_trace()
-                    mytcpheader.tcp_flags = 4
+                    mytcpheader.tcp_flags = 20
+                    mytcpheader.tcp_offset = 80
                     source_port = mytcpheader.tcp_sport
                     mytcpheader.tcp_sport = mytcpheader.tcp_dport
                     mytcpheader.tcp_dport = source_port
+                    mytcpheader.tcp_window = 0
+                    mytcpheader.tcp_urgent = 0
+                    ack = mytcpheader.tcp_seq + 1 
+                    mytcpheader.tcp_seq = 0
+                    mytcpheader.tcp_ack = ack
                     "We build the new tcp header with the RESET=1"
                     new_tcpheader = mytcpheader.build()
                     old_tcpheader = packet[(108+eth_length):(128+eth_length)]
                     "We create an auxiliar variable because strings are immutable"   
-                    packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
-                    "We replace the packet with the new tcp header"
+#                    packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
+                    packet_aux = packet[:(108+eth_length)] + new_tcpheader
+                    "We replace the packet with the new tcp header and save the original one"
                     packet = packet_aux
-                    
+#                    
 
-                    "We create the ICMP packet"
-                    myicmpheader = ICMPHEADER()
-                    myicmpheader.icmp_type = 3
-                    myicmpheader.icmp_code = 0
-                    myicmpheader.icmp_checksum = 
-                    myicmpheader.icmp_unused = 0
-                    myicmpheader.icmp_MTU = 
-                    myicmpheader.icmp_iphead = 
+#                    "We create the ICMP packet"
+#                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and ICMP sent" + bcolors.ENDC
+#                    old_packet = packet
+#                    myicmpheader = ICMPHEADER()
+#                    myicmpheader.icmp_type = 3
+#                    myicmpheader.icmp_code = 1
+#                    myicmpheader.icmp_checksum = 0 
+#                    myicmpheader.icmp_unused = 0
+#                    myicmpheader.icmp_MTU = 1400 
+#                    myicmpheader.icmp_iphead = 0 
+##                    ip_header_and_data = old_packet[(88+eth_length):(108+eth_length)] + packet[(108+eth_length):(116+eth_length)]
+#                    ip_header_and_data = old_packet[(88+eth_length):]
+#                    icmp_header_aux = myicmpheader.build()
+#                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
+#                    icmp_checksum = compute_internet_checksum(icmp_header)
+#                    myicmpheader.icmp_checksum = icmp_checksum
+#                    icmp_header_aux = myicmpheader.build()
+#                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
+#                    packet_aux = packet[:(108+eth_length)] + icmp_header
+#                    packet = packet_aux
 
                     "We do the same but with IP"
                     myinternalipheader = IP4HEADER()
                     decode_internal_ip(packet, eth_length, myinternalipheader)
+                    "Use the following parameters for ICMP"
+#                    myinternalipheader.ip_tot_len = 88
+#                    myinternalipheader.ip_tos = 192
+#                    myinternalipheader.ip_proto = 1
+                    myinternalipheader.ip_tot_len = 40
                     ip_source = myinternalipheader.ip_saddr
                     myinternalipheader.ip_saddr = myinternalipheader.ip_daddr
                     myinternalipheader.ip_daddr = ip_source
