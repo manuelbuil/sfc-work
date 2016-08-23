@@ -204,6 +204,22 @@ class UDPHEADER(Structure):
                                self.udp_sum)
         return udp_header_pack
 
+class PSEUDO_TCPHEADER(Structure):
+    """ Pseudoheader used in the TCP checksum."""
+
+    def __init__(self):
+        self.src_ip = 0
+        self.dest_ip = 0
+        self.zeroes = 0
+        self.protocol = 6 
+        self.length = 0
+
+    def build(self):
+        """ Create a string from a pseudoheader """
+        p_tcp_header_pack = pack('!I I B B H', self.src_ip, self.dest_ip,
+                                 self.zeroes, self.protocol, self.length)
+        return p_tcp_header_pack
+
 class PSEUDO_UDPHEADER(Structure):
     """ Pseudoheader used in the UDP checksum."""
 
@@ -451,6 +467,60 @@ def build_ipv4_header(ip_tot_len, proto, src_ip, dest_ip, swap_ip):
 
     return ip_header, ip_header_pack
 
+def build_ipv4_header_reset(ip_tot_len, proto, src_ip, dest_ip, swap_ip):
+    """
+    Builds a complete IP header including checksum
+    """
+
+    if (swap_ip == True):
+        new_ip_daddr = src_ip
+        new_ip_saddr = dest_ip
+
+    ip_header = IP4HEADER(IP_HEADER_LEN, IPV4_VERSION, IPV4_TOS, ip_tot_len, IPV4_PACKET_ID, 0, IPV4_TTL, proto, 0, new_ip_saddr, new_ip_daddr)
+
+    checksum = compute_internet_checksum(ip_header.build())
+    ip_header.set_ip_checksum(checksum)
+    ip_header_pack = ip_header.build()
+
+    return ip_header, ip_header_pack
+
+
+
+def build_tcp_reset(mytcpheader, ip_header):
+    """
+    Building an TCP header requires fields from
+    IP header in order to perform checksum calculation
+    """
+
+    # build TCP header with sum = 0
+    tcp_header = TCPHEADER()
+    tcp_header.tcp_flags = 20
+    tcp_header.tcp_offset = 80
+    source_port = mytcpheader.tcp_sport
+    tcp_header.tcp_sport = mytcpheader.tcp_dport
+    tcp_header.tcp_dport = source_port
+    tcp_header.tcp_window = 0
+    tcp_header.tcp_urgent = 0
+    ack = mytcpheader.tcp_seq + 1
+    tcp_header.tcp_seq = 0
+    tcp_header.tcp_ack = ack
+    tcp_header.tcp_checksum = 0
+    tcp_header_pack = tcp_header.build()
+
+    # build Pseudo Header
+    p_header = PSEUDO_TCPHEADER()
+    p_header.dest_ip = ip_header.ip_daddr
+    p_header.src_ip = ip_header.ip_saddr
+    p_header.length = 20
+
+    p_header_pack = p_header.build()
+
+    tcp_checksum = compute_internet_checksum(p_header_pack + tcp_header_pack)
+    tcp_header.tcp_checksum = tcp_checksum
+    # pack TCP header again but this time with checksum
+    tcp_header_pack = tcp_header.build()
+
+    return tcp_header, tcp_header_pack
 
 def build_udp_header(src_port, dest_port, ip_header, data):
     """
@@ -873,6 +943,7 @@ def main():
             if (do_print):
                 print_nsh_contextheader(mynshcontextheader)
 
+
             """ Check if Firewall checking is enabled, and block/drop if its the same TCP port """
             if (args.block != 0):
                 mytcpheader = TCPHEADER()
@@ -887,56 +958,57 @@ def main():
                         print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
                         continue
                 else:
-#                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
-#                    "Activate the RESET flag and exchange tcp ports"
-#                    #pdb.set_trace()
-#                    mytcpheader.tcp_flags = 4
-#                    source_port = mytcpheader.tcp_sport
-#                    mytcpheader.tcp_sport = mytcpheader.tcp_dport
-#                    mytcpheader.tcp_dport = source_port
-#                    "We build the new tcp header with the RESET=1"
-#                    new_tcpheader = mytcpheader.build()
-#                    old_tcpheader = packet[(108+eth_length):(128+eth_length)]
-#                    "We create an auxiliar variable because strings are immutable"   
-#                    packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
-#                    "We replace the packet with the new tcp header and save the original one"
-#                    packet = packet_aux
-#                    
+                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
+                    "Activate the RESET flag and exchange tcp ports"
 
-                    "We create the ICMP packet"
-                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and ICMP sent" + bcolors.ENDC
-                    old_packet = packet
-                    myicmpheader = ICMPHEADER()
-                    myicmpheader.icmp_type = 3
-                    myicmpheader.icmp_code = 1
-                    myicmpheader.icmp_checksum = 0 
-                    myicmpheader.icmp_unused = 0
-                    myicmpheader.icmp_MTU = 1400 
-                    myicmpheader.icmp_iphead = 0 
-#                    ip_header_and_data = old_packet[(88+eth_length):(108+eth_length)] + packet[(108+eth_length):(116+eth_length)]
-                    ip_header_and_data = old_packet[(88+eth_length):]
-                    icmp_header_aux = myicmpheader.build()
-                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
-                    icmp_checksum = compute_internet_checksum(icmp_header)
-                    myicmpheader.icmp_checksum = icmp_checksum
-                    icmp_header_aux = myicmpheader.build()
-                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
-                    packet_aux = packet[:(108+eth_length)] + icmp_header
-                    packet = packet_aux
+#                    "We create the ICMP packet"
+#                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and ICMP sent" + bcolors.ENDC
+#                    old_packet = packet
+#                    myicmpheader = ICMPHEADER()
+#                    myicmpheader.icmp_type = 3
+#                    myicmpheader.icmp_code = 1
+#                    myicmpheader.icmp_checksum = 0 
+#                    myicmpheader.icmp_unused = 0
+#                    myicmpheader.icmp_MTU = 1400 
+#                    myicmpheader.icmp_iphead = 0 
+##                    ip_header_and_data = old_packet[(88+eth_length):(108+eth_length)] + packet[(108+eth_length):(116+eth_length)]
+#                    ip_header_and_data = old_packet[(88+eth_length):]
+#                    icmp_header_aux = myicmpheader.build()
+#                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
+#                    icmp_checksum = compute_internet_checksum(icmp_header)
+#                    myicmpheader.icmp_checksum = icmp_checksum
+#                    icmp_header_aux = myicmpheader.build()
+#                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
+#                    packet_aux = packet[:(108+eth_length)] + icmp_header
+#                    packet = packet_aux
 
                     "We do the same but with IP"
                     myinternalipheader = IP4HEADER()
                     decode_internal_ip(packet, eth_length, myinternalipheader)
-                    myinternalipheader.ip_tot_len = 88
-                    myinternalipheader.ip_tos = 192
-                    myinternalipheader.ip_proto = 1
-                    ip_source = myinternalipheader.ip_saddr
-                    myinternalipheader.ip_saddr = myinternalipheader.ip_daddr
-                    myinternalipheader.ip_daddr = ip_source
-                    new_internalipheader = myinternalipheader.build()
+                    "Use the following parameters for ICMP"
+#                    myinternalipheader.ip_tot_len = 88
+#                    myinternalipheader.ip_tos = 192
+#                    myinternalipheader.ip_proto = 1
+#                    myinternalipheader.ip_id = 0
+#                    myinternalipheader.ip_tot_len = 40
+#                    ip_source = myinternalipheader.ip_saddr
+#                    myinternalipheader.ip_saddr = myinternalipheader.ip_daddr
+#                    myinternalipheader.ip_daddr = ip_source
+#                    new_internalipheader = myinternalipheader.build()
+ 
+                    myinternalipheader, new_internalipheader = build_ipv4_header_reset(40, myinternalipheader.ip_proto, myinternalipheader.ip_saddr, myinternalipheader.ip_daddr, True)
                     old_internalipheader = packet[(88+eth_length):(108+eth_length)]
                     packet_aux = packet[:(88+eth_length)] + new_internalipheader + packet[(108+eth_length):]
                     packet = packet_aux
+
+                    "We build the new tcp header with the RESET=1"
+                    tcp_header, new_tcpheader = build_tcp_reset(mytcpheader, myinternalipheader)
+                    old_tcpheader = packet[(108+eth_length):(128+eth_length)]
+                    "We create an auxiliar variable because strings are immutable"
+                    packet_aux = packet[:(108+eth_length)] + new_tcpheader
+                    "We replace the packet with the new tcp header and save the original one"
+                    packet = packet_aux
+
 
 #                    "We do the same but with MAC"
                     inner_internal_ethheader = ETHHEADER()
