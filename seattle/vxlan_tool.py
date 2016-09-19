@@ -467,6 +467,24 @@ def build_ipv4_header(ip_tot_len, proto, src_ip, dest_ip, swap_ip):
 
     return ip_header, ip_header_pack
 
+def build_ipv4_header_reset(ip_tot_len, proto, src_ip, dest_ip, swap_ip):
+    """
+    Builds a complete IP header including checksum
+    """
+
+    if (swap_ip == True):
+        new_ip_daddr = src_ip
+        new_ip_saddr = dest_ip
+
+    ip_header = IP4HEADER(IP_HEADER_LEN, IPV4_VERSION, IPV4_TOS, ip_tot_len, IPV4_PACKET_ID, 0, IPV4_TTL, proto, 0, new_ip_saddr, new_ip_daddr)
+
+    checksum = compute_internet_checksum(ip_header.build())
+    ip_header.set_ip_checksum(checksum)
+    ip_header_pack = ip_header.build()
+
+    return ip_header, ip_header_pack
+
+
 
 def build_tcp_reset(mytcpheader, ip_header):
     """
@@ -930,85 +948,41 @@ def main():
             if (args.block != 0):
                 mytcpheader = TCPHEADER()
                 decode_tcp(packet, eth_length, mytcpheader)
-                print bcolors.OKBLUE + "FLAGS" + str(mytcpheader.tcp_flags) + bcolors.ENDC
-                print bcolors.OKBLUE + "OFFSET " + str(mytcpheader.tcp_offset) + bcolors.ENDC
-                print bcolors.OKBLUE + "SEQ " + str(mytcpheader.tcp_seq) + bcolors.ENDC
-                print bcolors.OKBLUE + "ACK " + str(mytcpheader.tcp_ack) + bcolors.ENDC
 
+                """ Check if there is something in the third field of the metadata """
                 if (mynshcontextheader.service_platform == 0):
                     if (mytcpheader.tcp_dport == args.block):
                         print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
                         continue
                 else:
-                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
-                    "Activate the RESET flag and exchange tcp ports"
+                    if (mytcpheader.tcp_dport == args.block):
+                        print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
 
-#                    "We create the ICMP packet"
-#                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and ICMP sent" + bcolors.ENDC
-#                    old_packet = packet
-#                    myicmpheader = ICMPHEADER()
-#                    myicmpheader.icmp_type = 3
-#                    myicmpheader.icmp_code = 1
-#                    myicmpheader.icmp_checksum = 0 
-#                    myicmpheader.icmp_unused = 0
-#                    myicmpheader.icmp_MTU = 1400 
-#                    myicmpheader.icmp_iphead = 0 
-##                    ip_header_and_data = old_packet[(88+eth_length):(108+eth_length)] + packet[(108+eth_length):(116+eth_length)]
-#                    ip_header_and_data = old_packet[(88+eth_length):]
-#                    icmp_header_aux = myicmpheader.build()
-#                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
-#                    icmp_checksum = compute_internet_checksum(icmp_header)
-#                    myicmpheader.icmp_checksum = icmp_checksum
-#                    icmp_header_aux = myicmpheader.build()
-#                    icmp_header = icmp_header_aux[:8] + ip_header_and_data
-#                    packet_aux = packet[:(108+eth_length)] + icmp_header
-#                    packet = packet_aux
+                        "We do the same but with IP"
+                        myinternalipheader = IP4HEADER()
+                        decode_internal_ip(packet, eth_length, myinternalipheader)
+                        myinternalipheader, new_internalipheader = build_ipv4_header_reset(40, myinternalipheader.ip_proto, myinternalipheader.ip_saddr, myinternalipheader.ip_daddr, True)
+                        old_internalipheader = packet[(88+eth_length):(108+eth_length)]
+                        packet_aux = packet[:(88+eth_length)] + new_internalipheader + packet[(108+eth_length):]
+                        packet = packet_aux
 
-                    "We do the same but with IP"
-                    myinternalipheader = IP4HEADER()
-                    decode_internal_ip(packet, eth_length, myinternalipheader)
-                    "Use the following parameters for ICMP"
-#                    myinternalipheader.ip_tot_len = 88
-#                    myinternalipheader.ip_tos = 192
-#                    myinternalipheader.ip_proto = 1
-                    myinternalipheader.ip_id = 0
-                    myinternalipheader.ip_tot_len = 40
-                    ip_source = myinternalipheader.ip_saddr
-                    myinternalipheader.ip_saddr = myinternalipheader.ip_daddr
-                    myinternalipheader.ip_daddr = ip_source
-                    new_internalipheader = myinternalipheader.build()
-                    old_internalipheader = packet[(88+eth_length):(108+eth_length)]
-                    packet_aux = packet[:(88+eth_length)] + new_internalipheader + packet[(108+eth_length):]
-                    packet = packet_aux
+                        "We build the new tcp header with the RESET=1"
+                        tcp_header, new_tcpheader = build_tcp_reset(mytcpheader, myinternalipheader)
+                        old_tcpheader = packet[(108+eth_length):(128+eth_length)]
+                        "We create an auxiliar variable because strings are immutable"
+                        packet_aux = packet[:(108+eth_length)] + new_tcpheader
+                        "We replace the packet with the new tcp header and save the original one"
+                        packet = packet_aux
 
-                    "We build the new tcp header with the RESET=1"
-                    tcp_header, new_tcpheader = build_tcp_reset(mytcpheader, myinternalipheader)
-
-#                    "We build the new tcp header with the RESET=1"
-#                    new_tcpheader = mytcpheader.build()
-                    old_tcpheader = packet[(108+eth_length):(128+eth_length)]
-
-                    "We create an auxiliar variable because strings are immutable"
-#                    packet_aux = packet[:(108+eth_length)] + new_tcpheader + packet[(128+eth_length):]
-                    packet_aux = packet[:(108+eth_length)] + new_tcpheader
-                    "We replace the packet with the new tcp header and save the original one"
-                    packet = packet_aux
-
-
-#                    "We do the same but with MAC"
-                    inner_internal_ethheader = ETHHEADER()
-                    inner_offset = eth_length + ip_length + udp_length + vxlan_length + eth_length + nshbase_length + nshcontext_length
-                    decode_eth(packet, inner_offset, inner_internal_ethheader)
-                    newethheader = build_ethernet_header_swap(inner_internal_ethheader)
-                    new_ether_header = newethheader.build()
-                    old_ether_header = packet[(74+eth_length):(88+eth_length)]
-                    packet_aux = packet[:inner_offset] + new_ether_header + packet[inner_offset + eth_length:]
-                    packet = packet_aux 
-#                    
-#
-#                    "We get the nsp of the symmetric chain which is in the metadata"
-#                    nsp_symm = mynshcontextheader.service_platform
-#                    mynshbaseheader.service_path = nsp_symm
+                        "We do the same but with MAC"
+                        inner_internal_ethheader = ETHHEADER()
+                        inner_offset = eth_length + ip_length + udp_length + vxlan_length + eth_length + nshbase_length + nshcontext_length
+                        decode_eth(packet, inner_offset, inner_internal_ethheader)
+                        newethheader = build_ethernet_header_swap(inner_internal_ethheader)
+                        new_ether_header = newethheader.build()
+                        old_ether_header = packet[(74+eth_length):(88+eth_length)]
+                        packet_aux = packet[:inner_offset] + new_ether_header + packet[inner_offset + eth_length:]
+                        packet = packet_aux 
 
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
