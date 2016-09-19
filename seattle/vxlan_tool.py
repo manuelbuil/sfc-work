@@ -630,6 +630,9 @@ def main():
                         help='Strip the outer encapsulation and forward the inner packet')
     parser.add_argument('--block', '-b', type=int, default=0,
                         help='Acts as a firewall dropping packets that match this TCP dst port')
+    parser.add_argument('--metadata', '-md', action="store_true",
+                        help='Acts as a firewall dropping packets that match this TCP dst port')
+
 
 
     args = parser.parse_args()
@@ -950,40 +953,40 @@ def main():
                 decode_tcp(packet, eth_length, mytcpheader)
 
                 """ Check if there is something in the third field of the metadata """
-                if (mynshcontextheader.service_platform == 0):
-                    if (mytcpheader.tcp_dport == args.block):
+                if ((args.metadata) and (mytcpheader.tcp_dport == args.block) and (mynshcontextheader.service_platform != 0)):
+                    print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
+
+                    "We do the same but with IP"
+                    myinternalipheader = IP4HEADER()
+                    decode_internal_ip(packet, eth_length, myinternalipheader)
+                    myinternalipheader, new_internalipheader = build_ipv4_header_reset(40, myinternalipheader.ip_proto, myinternalipheader.ip_saddr, myinternalipheader.ip_daddr, True)
+                    old_internalipheader = packet[(88+eth_length):(108+eth_length)]
+                    packet_aux = packet[:(88+eth_length)] + new_internalipheader + packet[(108+eth_length):]
+                    packet = packet_aux
+
+                    "We build the new tcp header with the RESET=1"
+                    tcp_header, new_tcpheader = build_tcp_reset(mytcpheader, myinternalipheader)
+                    old_tcpheader = packet[(108+eth_length):(128+eth_length)]
+                    "We create an auxiliar variable because strings are immutable"
+                    packet_aux = packet[:(108+eth_length)] + new_tcpheader
+                    "We replace the packet with the new tcp header and save the original one"
+                    packet = packet_aux
+
+                    "We do the same but with MAC"
+                    inner_internal_ethheader = ETHHEADER()
+                    inner_offset = eth_length + ip_length + udp_length + vxlan_length + eth_length + nshbase_length + nshcontext_length
+                    decode_eth(packet, inner_offset, inner_internal_ethheader)
+                    newethheader = build_ethernet_header_swap(inner_internal_ethheader)
+                    new_ether_header = newethheader.build()
+                    old_ether_header = packet[(74+eth_length):(88+eth_length)]
+                    packet_aux = packet[:inner_offset] + new_ether_header + packet[inner_offset + eth_length:]
+                    packet = packet_aux 
+
+                else:
+                    if ((mytcpheader.tcp_dport == args.block)):
                         print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
                         continue
-                else:
-                    if (mytcpheader.tcp_dport == args.block):
-                        print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
-
-                        "We do the same but with IP"
-                        myinternalipheader = IP4HEADER()
-                        decode_internal_ip(packet, eth_length, myinternalipheader)
-                        myinternalipheader, new_internalipheader = build_ipv4_header_reset(40, myinternalipheader.ip_proto, myinternalipheader.ip_saddr, myinternalipheader.ip_daddr, True)
-                        old_internalipheader = packet[(88+eth_length):(108+eth_length)]
-                        packet_aux = packet[:(88+eth_length)] + new_internalipheader + packet[(108+eth_length):]
-                        packet = packet_aux
-
-                        "We build the new tcp header with the RESET=1"
-                        tcp_header, new_tcpheader = build_tcp_reset(mytcpheader, myinternalipheader)
-                        old_tcpheader = packet[(108+eth_length):(128+eth_length)]
-                        "We create an auxiliar variable because strings are immutable"
-                        packet_aux = packet[:(108+eth_length)] + new_tcpheader
-                        "We replace the packet with the new tcp header and save the original one"
-                        packet = packet_aux
-
-                        "We do the same but with MAC"
-                        inner_internal_ethheader = ETHHEADER()
-                        inner_offset = eth_length + ip_length + udp_length + vxlan_length + eth_length + nshbase_length + nshcontext_length
-                        decode_eth(packet, inner_offset, inner_internal_ethheader)
-                        newethheader = build_ethernet_header_swap(inner_internal_ethheader)
-                        new_ether_header = newethheader.build()
-                        old_ether_header = packet[(74+eth_length):(88+eth_length)]
-                        packet_aux = packet[:inner_offset] + new_ether_header + packet[inner_offset + eth_length:]
-                        packet = packet_aux 
-
+ 
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
                 newethheader = build_ethernet_header_swap(myethheader)
