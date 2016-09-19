@@ -584,10 +584,10 @@ def print_vxlanheader(vxlanheader):
     print("VxLAN/VxLAN-gpe VNI: %s, flags: %.2x, Next: %s" % (vxlanheader.vni, vxlanheader.flags, vxlanheader.next_protocol))
 
 def print_nsh_baseheader(nshbaseheader):
-    print("NSH base nsp: %s, nsi: %s" % (nshbaseheader.service_path, nshbaseheader.service_index))
+    print bcolors.OKGREEN + "NSH base nsp: %s, nsi: %s" % (nshbaseheader.service_path, nshbaseheader.service_index) + bcolors.ENDC
 
 def print_nsh_contextheader(nshcontextheader):
-    print("NSH context c1: 0x%.8x, c2: 0x%.8x, c3: 0x%.8x, c4: 0x%.8x" % (nshcontextheader.network_platform, nshcontextheader.network_shared, nshcontextheader.service_platform, nshcontextheader.service_shared))
+    print bcolors.OKGREEN + "NSH context c1: 0x%.8x, c2: 0x%.8x, c3: 0x%.8x, c4: 0x%.8x" % (nshcontextheader.network_platform, nshcontextheader.network_shared, nshcontextheader.service_platform, nshcontextheader.service_shared) + bcolors.ENDC
 
 def main():
     parser = argparse.ArgumentParser(description='This is a VxLAN/VxLAN-gpe + NSH dump and forward tool, you can use it to dump and forward VxLAN/VxLAN-gpe + NSH packets, it can also act as an NSH-aware SF for SFC test when you use --forward option, in that case, it will automatically decrease nsi by one.', prog='vxlan_tool.py')
