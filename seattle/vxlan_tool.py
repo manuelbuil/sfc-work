@@ -631,8 +631,7 @@ def main():
     parser.add_argument('--block', '-b', type=int, default=0,
                         help='Acts as a firewall dropping packets that match this TCP dst port')
     parser.add_argument('--metadata', '-md', action="store_true",
-                        help='Acts as a firewall dropping packets that match this TCP dst port')
-
+                        help='Will send a TCP RST packet to the client when blocking')
 
 
     args = parser.parse_args()
@@ -946,14 +945,11 @@ def main():
             if (do_print):
                 print_nsh_contextheader(mynshcontextheader)
 
-
             """ Check if Firewall checking is enabled, and block/drop if its the same TCP port """
             if (args.block != 0):
                 mytcpheader = TCPHEADER()
                 decode_tcp(packet, eth_length, mytcpheader)
-
-                """ Check if there is something in the third field of the metadata """
-                if ((args.metadata) and (mytcpheader.tcp_dport == args.block) and (mynshcontextheader.service_platform != 0)):
+                if ((args.metadata) and (mynshcontextheader.service_platform != 0) and (args.block == mytcpheader.tcp_dport)):
                     print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
 
                     "We do the same but with IP"
@@ -983,10 +979,10 @@ def main():
                     packet = packet_aux 
 
                 else:
-                    if ((mytcpheader.tcp_dport == args.block)):
+                    if ((args.block == mytcpheader.tcp_dport)):
                         print bcolors.WARNING + "TCP packet dropped on port: " + str(args.block) + bcolors.ENDC
                         continue
- 
+
             if ((args.do == "forward") and (args.interface is not None) and (mynshbaseheader.service_index > 1)):
                 """ Build Ethernet header """
                 newethheader = build_ethernet_header_swap(myethheader)

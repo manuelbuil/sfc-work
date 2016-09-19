@@ -7,6 +7,6 @@ sleep 5
 tacker sfc-classifier-list
 
 compute_ip=10.20.0.11
-nsp_blue=0x96
+nsp_blue=0xB1
 ssh ${compute_ip} 'bash sfc-work/seattle/correct_classifier.bash ${nsp_blue}'
 
