@@ -6,6 +6,6 @@ tacker sfc-classifier-create --name blue_ssh  --chain blue --match source_port=0
 sleep 15 
 tacker sfc-classifier-list
 
-#compute_ip=10.20.0.4
-#nsp_blue=0xca
-#ssh ${compute_ip} "bash sfc-work/seattle/correct_classifier.bash ${nsp_blue}"
+compute_ip=10.20.0.7
+nsp_blue=0x15d
+ssh ${compute_ip} "bash /root/sfc-work/seattle/correct_classifier.bash ${nsp_blue}"

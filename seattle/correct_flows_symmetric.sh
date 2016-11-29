@@ -1,7 +1,7 @@
-nsp_sym=8388728
+nsp_sym=8388966
 vxlan_gpe=6
 block_port=80
-nsp=120
+nsp=358
 
 #ovs-ofctl -O Openflow13 add-flow br-int "table=1, priority=40000,nsi=254,nsp=$nsp_sym,reg0=0x1,in_port=$sf_port actions=pop_nsh,goto_table:21"
 #ovs-ofctl -O Openflow13 add-flow br-int "table=11, n_packets=18, n_bytes=2115, nsi=254,nsp=$nsp_sym,in_port=8 actions=load:0x1->NXM_NX_REG0[],move:NXM_NX_NSH_C2[]->NXM_NX_TUN_ID[0..31],resubmit($sf_port,1)"
