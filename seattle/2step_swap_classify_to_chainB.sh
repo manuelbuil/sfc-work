@@ -3,9 +3,9 @@ tacker sfc-classifier-delete red_ssh
 
 tacker sfc-classifier-create --name blue_http --chain blue --match source_port=0,dest_port=80,protocol=6
 tacker sfc-classifier-create --name blue_ssh  --chain blue --match source_port=0,dest_port=22,protocol=6
-sleep 5 
+sleep 15 
 tacker sfc-classifier-list
 
-compute_ip=10.20.0.4
-nsp_blue=0xca
-ssh ${compute_ip} "bash sfc-work/seattle/correct_classifier.bash ${nsp_blue}"
+#compute_ip=10.20.0.4
+#nsp_blue=0xca
+#ssh ${compute_ip} "bash sfc-work/seattle/correct_classifier.bash ${nsp_blue}"
