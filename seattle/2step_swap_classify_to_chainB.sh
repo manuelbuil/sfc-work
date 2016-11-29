@@ -8,4 +8,4 @@ tacker sfc-classifier-list
 
 compute_ip=10.20.0.7
 nsp_blue=0x15d
-ssh ${compute_ip} "bash /root/sfc-work/seattle/correct_classifier.bash ${nsp_blue}"
+#ssh ${compute_ip} "bash /root/sfc-work/seattle/correct_classifier.bash ${nsp_blue}"
