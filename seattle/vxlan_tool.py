@@ -952,6 +952,9 @@ def main():
                 if ((args.metadata) and (mynshcontextheader.service_platform != 0) and (args.block == mytcpheader.tcp_dport)):
                     print bcolors.WARNING + "TCP packet dropped: " + str(args.block) + " and RESET sent" + bcolors.ENDC
 
+                    "The nsp from the symmetric RSP is stored in the nsp field of NSH"
+                    mynshbaseheader.service_path = mynshcontextheader.service_platform
+
                     "We do the same but with IP"
                     myinternalipheader = IP4HEADER()
                     decode_internal_ip(packet, eth_length, myinternalipheader)
