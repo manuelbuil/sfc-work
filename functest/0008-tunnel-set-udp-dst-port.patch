@@ -1,0 +1,10 @@
+--- a/ofproto/tunnel.c  2016-12-08 09:31:42.714781424 -0500
++++ b/ofproto/tunnel.c  2016-12-08 09:35:32.653045601 -0500
+@@ -438,6 +438,7 @@
+     flow->pkt_mark |= tnl_port->match.pkt_mark;
+     wc->masks.pkt_mark |= tnl_port->match.pkt_mark;
+
++    flow->tunnel.tp_dst = cfg->dst_port;
+     if (!cfg->out_key_flow) {
+         flow->tunnel.tun_id = cfg->out_key;
+     }
